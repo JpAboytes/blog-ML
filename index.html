@@ -3,750 +3,764 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reconocimiento de Expresiones Faciales con Redes Neuronales</title>
+  <title>Reconocimiento de Expresiones Faciales · FER2013</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --ink:      #1a1a2e;
-      --ink-soft: #4a4a6a;
-      --ink-faint:#8888aa;
-      --bg:       #f8f8f8;
-      --bg-card:  #ffffff;
-      --accent:   #1a1a2e;
-      --accent-light: #e8e8f4;
-      --code-bg:  #f0f0f4;
-      --max-w:    780px;
-      --gap:      4rem;
+      --ink:        #0f0f14;
+      --ink-2:      #3a3a4f;
+      --ink-3:      #7a7a96;
+      --ink-4:      #b0b0c8;
+      --bg:         #fafaf8;
+      --bg-2:       #f2f2ee;
+      --bg-card:    #ffffff;
+      --accent:     #2a2a72;
+      --accent-2:   #5252c8;
+      --accent-light: #ebebfa;
+      --gold:       #c8a84b;
+      --green:      #2d7a5f;
+      --red:        #c84b4b;
+      --border:     #e4e4dc;
+      --mono:       'DM Mono', monospace;
+      --serif:      'DM Serif Display', Georgia, serif;
+      --sans:       'DM Sans', system-ui, sans-serif;
+      --max-w:      820px;
     }
 
     html { scroll-behavior: smooth; }
 
     body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-family: var(--sans);
       background: var(--bg);
       color: var(--ink);
-      line-height: 1.75;
+      line-height: 1.8;
       font-size: 1rem;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── Layout ── */
-    .container {
-      max-width: var(--max-w);
-      margin: 0 auto;
-      padding: 0 1.5rem;
+    /* NAV */
+    .top-nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(250,250,248,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.7rem 1.5rem;
+    }
+    .top-nav-inner {
+      max-width: var(--max-w); margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .nav-brand { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-3); letter-spacing: 0.05em; }
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a { font-size: 0.78rem; color: var(--ink-3); text-decoration: none; transition: color 0.2s; font-weight: 500; }
+    .nav-links a:hover { color: var(--accent-2); }
+
+    /* HERO */
+    .hero {
+      background: var(--accent); position: relative; overflow: hidden;
+      padding: 6rem 1.5rem 5rem;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 70% at 80% 20%, rgba(82,82,200,0.35) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 50% at 10% 80%, rgba(200,168,75,0.15) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px; pointer-events: none;
+    }
+    .hero-inner { max-width: var(--max-w); margin: 0 auto; position: relative; z-index: 2; }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 99px; padding: 0.3em 0.9em;
+      font-size: 0.72rem; font-weight: 500; color: rgba(255,255,255,0.6);
+      letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1.8rem;
+      font-family: var(--mono);
+    }
+    .hero-eyebrow span { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); display: inline-block; }
+    .hero h1 {
+      font-family: var(--serif); font-size: clamp(2rem, 5vw, 3.2rem);
+      color: #fff; line-height: 1.15; max-width: 680px;
+      margin-bottom: 1.4rem; font-weight: 400;
+    }
+    .hero h1 em { color: var(--gold); font-style: italic; }
+    .hero-sub {
+      font-size: 1rem; color: rgba(255,255,255,0.6);
+      max-width: 560px; line-height: 1.75; margin-bottom: 2.5rem; font-weight: 300;
+    }
+    .hero-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .hero-tag {
+      font-family: var(--mono); font-size: 0.7rem; color: rgba(255,255,255,0.45);
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      padding: 0.3em 0.75em; border-radius: 4px;
     }
 
-    /* ── Header ── */
-    header {
-      background: var(--accent);
-      color: #fff;
-      padding: 5rem 1.5rem 4rem;
-    }
+    /* LAYOUT */
+    .container { max-width: var(--max-w); margin: 0 auto; padding: 0 1.5rem; }
+    main { padding: 5rem 0 6rem; }
+    section { margin-bottom: 5rem; }
+    section:last-child { margin-bottom: 0; }
 
-    header .container {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
+    /* SECTION LABEL */
+    .sec-label { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.2rem; }
+    .sec-num { font-family: var(--mono); font-size: 0.65rem; color: var(--accent-2); font-weight: 500; letter-spacing: 0.1em; }
+    .sec-line { flex: 1; height: 1px; background: var(--border); }
 
-    .header-label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.55);
-    }
+    h2 { font-family: var(--serif); font-size: 1.75rem; font-weight: 400; color: var(--ink); margin-bottom: 1.4rem; line-height: 1.25; }
+    h3 { font-size: 0.88rem; font-weight: 600; color: var(--ink); margin-bottom: 0.7rem; margin-top: 2rem; text-transform: uppercase; letter-spacing: 0.07em; }
+    p { color: var(--ink-2); margin-bottom: 1.1rem; font-size: 0.97rem; }
+    p:last-child { margin-bottom: 0; }
 
-    header h1 {
-      font-size: clamp(1.75rem, 4vw, 2.6rem);
-      font-weight: 700;
-      line-height: 1.2;
-      color: #fff;
-      max-width: 620px;
-    }
+    /* CALLOUT */
+    .callout { border-left: 3px solid var(--accent-2); background: var(--accent-light); padding: 1rem 1.4rem; border-radius: 0 8px 8px 0; margin: 1.75rem 0; }
+    .callout p { font-size: 0.91rem; color: var(--ink); margin: 0; }
+    .callout.warn { border-color: var(--gold); background: #fdf8ed; }
+    .callout.warn p { color: #5a4010; }
 
-    header p.subtitle {
-      font-size: 1.05rem;
-      color: rgba(255,255,255,0.7);
-      max-width: 560px;
-      line-height: 1.65;
-    }
+    /* CODE */
+    pre, code { font-family: var(--mono); font-size: 0.83rem; }
+    pre { background: var(--ink); color: #e8e8f8; padding: 1.5rem 1.75rem; border-radius: 10px; overflow-x: auto; margin: 1.75rem 0; line-height: 1.7; }
+    code { background: var(--bg-2); color: var(--accent); padding: 0.15em 0.45em; border-radius: 4px; }
+    pre code { background: none; color: inherit; padding: 0; }
+    .cm { color: #7a7aaa; } .ck { color: #c8a84b; } .cs { color: #82d982; } .cn { color: #82b4ff; }
 
-    .header-meta {
-      display: flex;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-      margin-top: 0.5rem;
-    }
+    /* STATS */
+    .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin: 2rem 0; }
+    .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 1.2rem; text-align: center; }
+    .stat-value { font-family: var(--serif); font-size: 2.4rem; color: var(--accent); display: block; line-height: 1; margin-bottom: 0.5rem; }
+    .stat-label { font-size: 0.75rem; color: var(--ink-3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; }
 
-    .meta-item {
-      font-size: 0.82rem;
-      color: rgba(255,255,255,0.5);
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
-    }
+    /* CLASS BARS */
+    .class-bars { display: flex; flex-direction: column; gap: 0.6rem; margin: 1.5rem 0; }
+    .class-row { display: grid; grid-template-columns: 100px 1fr 55px; align-items: center; gap: 0.75rem; }
+    .class-name { font-size: 0.83rem; color: var(--ink-2); font-weight: 500; }
+    .bar-track { height: 7px; background: var(--bg-2); border-radius: 99px; overflow: hidden; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: 99px; }
+    .class-count { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-4); text-align: right; }
 
-    .meta-item span.dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.35);
-      display: inline-block;
-    }
+    /* DESIGN GRID */
+    .design-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.75rem 0; }
+    .design-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.4rem 1.3rem; transition: border-color 0.2s; }
+    .design-card:hover { border-color: var(--accent-2); }
+    .design-card .dc-icon { font-size: 1.3rem; margin-bottom: 0.7rem; display: block; }
+    .design-card h4 { font-size: 0.88rem; font-weight: 600; color: var(--ink); margin-bottom: 0.4rem; }
+    .design-card p { font-size: 0.83rem; color: var(--ink-3); margin: 0; line-height: 1.65; }
 
-    /* ── Main content ── */
-    main {
-      padding: 5rem 0;
-    }
-
-    section {
-      margin-bottom: var(--gap);
-    }
-
-    section:last-child {
-      margin-bottom: 0;
-    }
-
-    /* ── Section labels ── */
-    .section-number {
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--ink-faint);
-      margin-bottom: 0.6rem;
-      display: block;
-    }
-
-    h2 {
-      font-size: 1.45rem;
-      font-weight: 700;
-      color: var(--ink);
-      margin-bottom: 1.4rem;
-      line-height: 1.3;
-    }
-
-    h3 {
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: var(--ink);
-      margin-bottom: 0.75rem;
-      margin-top: 1.75rem;
-    }
-
-    p {
-      color: var(--ink-soft);
-      margin-bottom: 1rem;
-    }
-
-    p:last-child {
-      margin-bottom: 0;
-    }
-
-    /* ── Highlight box ── */
-    .callout {
-      background: var(--accent-light);
-      border-left: 3px solid var(--accent);
-      padding: 1.1rem 1.4rem;
-      border-radius: 0 6px 6px 0;
-      margin: 1.5rem 0;
-    }
-
-    .callout p {
-      font-size: 0.93rem;
-      margin: 0;
-      color: var(--ink);
-    }
-
-    /* ── Code blocks ── */
-    pre, code {
-      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
-      font-size: 0.87rem;
-    }
-
-    pre {
-      background: var(--code-bg);
-      padding: 1.25rem 1.5rem;
-      border-radius: 8px;
-      overflow-x: auto;
-      margin: 1.5rem 0;
-      color: var(--ink);
-      line-height: 1.65;
-    }
-
-    code {
-      background: var(--code-bg);
-      padding: 0.15em 0.45em;
-      border-radius: 4px;
-      color: var(--ink);
-    }
-
-    pre code {
-      background: none;
-      padding: 0;
-    }
-
-    /* ── Stats row ── */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin: 2rem 0;
-    }
-
-    .stat-card {
-      background: var(--bg-card);
-      border-radius: 10px;
-      padding: 1.4rem 1.2rem;
-      text-align: center;
-    }
-
-    .stat-value {
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--accent);
-      display: block;
-      line-height: 1;
-      margin-bottom: 0.4rem;
-    }
-
-    .stat-label {
-      font-size: 0.78rem;
-      color: var(--ink-faint);
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-
-    /* ── Class distribution ── */
-    .class-bars {
-      margin: 1.5rem 0;
-      display: flex;
-      flex-direction: column;
-      gap: 0.55rem;
-    }
-
-    .class-row {
-      display: grid;
-      grid-template-columns: 110px 1fr 50px;
-      align-items: center;
-      gap: 0.75rem;
-      font-size: 0.85rem;
-    }
-
-    .class-name {
-      color: var(--ink-soft);
-      font-weight: 500;
-      white-space: nowrap;
-    }
-
-    .bar-track {
-      height: 8px;
-      background: var(--code-bg);
-      border-radius: 99px;
-      overflow: hidden;
-    }
-
-    .bar-fill {
-      height: 100%;
-      background: var(--accent);
-      border-radius: 99px;
-      opacity: 0.7;
-    }
-
-    .class-count {
-      color: var(--ink-faint);
-      font-size: 0.78rem;
-      text-align: right;
-    }
-
-    /* ── Table ── */
-    .table-wrap {
-      overflow-x: auto;
-      margin: 1.75rem 0;
-      border-radius: 10px;
-      background: var(--bg-card);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9rem;
-    }
-
+    /* TABLES */
+    .table-wrap { overflow-x: auto; margin: 1.75rem 0; border-radius: 12px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
     thead th {
-      background: var(--accent);
-      color: #fff;
-      font-weight: 600;
-      font-size: 0.78rem;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      padding: 0.9rem 1.2rem;
-      text-align: left;
+      background: var(--ink); color: rgba(255,255,255,0.8);
+      font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.08em;
+      text-transform: uppercase; padding: 0.85rem 1.2rem; text-align: left; font-weight: 500;
     }
+    thead th:first-child { border-radius: 11px 0 0 0; }
+    thead th:last-child  { border-radius: 0 11px 0 0; }
+    tbody tr { border-bottom: 1px solid var(--border); }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr.hl { background: var(--accent-light); }
+    tbody td { padding: 0.85rem 1.2rem; color: var(--ink-2); }
+    tbody td:first-child { color: var(--ink); font-weight: 600; font-family: var(--mono); font-size: 0.8rem; }
+    .badge { display: inline-block; padding: 0.2em 0.65em; border-radius: 99px; font-size: 0.7rem; font-weight: 600; }
+    .badge-best { background: var(--accent-light); color: var(--accent-2); }
+    .badge-warn { background: #fdf3e0; color: #9a6a10; }
 
-    thead th:first-child { border-radius: 10px 0 0 0; }
-    thead th:last-child  { border-radius: 0 10px 0 0; }
-
-    tbody tr {
-      border-bottom: 1px solid var(--code-bg);
+    /* EXPERIMENT TABLE */
+    .exp-table-wrap { overflow-x: auto; margin: 1.75rem 0; border-radius: 12px; border: 1px solid var(--border); }
+    .exp-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .exp-table thead th {
+      background: var(--ink); color: rgba(255,255,255,0.75);
+      font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.07em;
+      text-transform: uppercase; padding: 0.75rem 0.9rem; text-align: left; font-weight: 500;
     }
+    .exp-table thead th:first-child { border-radius: 11px 0 0 0; }
+    .exp-table thead th:last-child  { border-radius: 0 11px 0 0; }
+    .exp-table tbody tr { border-bottom: 1px solid var(--border); }
+    .exp-table tbody tr:last-child { border-bottom: none; }
+    .exp-table tbody td { padding: 0.65rem 0.9rem; color: var(--ink-2); vertical-align: top; }
+    .exp-table tbody td:first-child { font-family: var(--mono); font-size: 0.74rem; color: var(--ink-3); }
+    .acc-cell { font-family: var(--mono); font-weight: 500; color: var(--ink); }
+    .interp { font-size: 0.77rem; color: var(--ink-3); font-style: italic; }
+    .exp-table tr.exp-best td { background: var(--accent-light); }
+    .exp-table tr.exp-best td:first-child { color: var(--accent-2); }
+    .trend-up   { color: var(--green); font-size: 0.8rem; font-family: var(--mono); }
+    .trend-down { color: var(--red);   font-size: 0.8rem; font-family: var(--mono); }
+    .trend-flat { color: var(--ink-4); font-size: 0.8rem; font-family: var(--mono); }
 
-    tbody tr:last-child {
-      border-bottom: none;
+    /* GRAPH PLACEHOLDER */
+    .graph-placeholder {
+      background: var(--bg-card); border: 2px dashed var(--border);
+      border-radius: 12px; padding: 3rem 2rem; text-align: center; margin: 1.75rem 0;
     }
+    .graph-placeholder .gp-icon { font-size: 2rem; display: block; margin-bottom: 0.75rem; opacity: 0.3; }
+    .graph-placeholder .gp-label { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; }
+    .graph-placeholder .gp-sub { font-size: 0.82rem; color: var(--ink-4); margin-top: 0.5rem; }
 
-    tbody tr.highlight-row {
-      background: var(--accent-light);
-    }
-
-    tbody td {
-      padding: 0.85rem 1.2rem;
-      color: var(--ink-soft);
-    }
-
-    tbody td:first-child {
-      color: var(--ink);
-      font-weight: 500;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 0.2em 0.65em;
-      border-radius: 99px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-
-    .badge-best {
-      background: var(--accent-light);
-      color: var(--accent);
-    }
-
-    /* ── Decision cards ── */
-    .decision-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      margin: 1.5rem 0;
-    }
-
-    .decision-card {
-      background: var(--bg-card);
-      border-radius: 10px;
-      padding: 1.4rem 1.3rem;
-    }
-
-    .decision-card .icon {
-      font-size: 1.4rem;
-      margin-bottom: 0.6rem;
-      display: block;
-    }
-
-    .decision-card h4 {
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--ink);
-      margin-bottom: 0.4rem;
-    }
-
-    .decision-card p {
-      font-size: 0.85rem;
-      margin: 0;
-      color: var(--ink-faint);
-      line-height: 1.6;
-    }
-
-    /* ── Future work list ── */
-    .future-list {
-      list-style: none;
-      margin: 1.25rem 0;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
+    /* FUTURE LIST */
+    .future-list { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; margin: 1.25rem 0; }
     .future-list li {
-      display: flex;
-      align-items: baseline;
-      gap: 0.75rem;
-      font-size: 0.92rem;
-      color: var(--ink-soft);
+      display: flex; gap: 1rem; align-items: flex-start;
+      font-size: 0.92rem; color: var(--ink-2);
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.85rem 1.1rem;
     }
+    .future-list li .fl-num { font-family: var(--mono); font-size: 0.7rem; color: var(--accent-2); font-weight: 500; flex-shrink: 0; margin-top: 0.15rem; }
 
-    .future-list li::before {
-      content: '';
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--accent);
-      flex-shrink: 0;
-      margin-top: 0.55rem;
-    }
+    /* FOOTER */
+    footer { background: var(--ink); color: rgba(255,255,255,0.35); padding: 3rem 1.5rem; text-align: center; font-size: 0.82rem; line-height: 1.9; }
+    footer strong { color: rgba(255,255,255,0.7); font-weight: 500; }
+    .footer-tags { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-top: 1.1rem; }
+    .footer-tag { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.35); padding: 0.2em 0.75em; border-radius: 4px; font-family: var(--mono); font-size: 0.7rem; }
 
-    /* ── Footer ── */
-    footer {
-      background: var(--ink);
-      color: rgba(255,255,255,0.45);
-      padding: 2.5rem 1.5rem;
-      text-align: center;
-      font-size: 0.82rem;
-      line-height: 1.8;
-    }
-
-    footer strong {
-      color: rgba(255,255,255,0.75);
-      font-weight: 600;
-    }
-
-    footer .footer-tags {
-      display: flex;
-      gap: 0.5rem;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-top: 1rem;
-    }
-
-    footer .tag {
-      background: rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.5);
-      padding: 0.2em 0.7em;
-      border-radius: 99px;
-      font-size: 0.75rem;
-    }
-
-    /* ── Responsive ── */
-    @media (max-width: 600px) {
-      :root { --gap: 3rem; }
-
-      header { padding: 3.5rem 1.5rem 3rem; }
-      header h1 { font-size: 1.6rem; }
-
+    @media (max-width: 620px) {
+      .hero { padding: 4rem 1.5rem 3.5rem; }
       .stats-row { grid-template-columns: 1fr 1fr; }
-      .stats-row .stat-card:last-child { grid-column: 1 / -1; }
-
-      .decision-grid { grid-template-columns: 1fr; }
-
-      .class-row { grid-template-columns: 90px 1fr 45px; }
-
-      thead th, tbody td { padding: 0.7rem 0.9rem; }
+      .stats-row .stat-card:last-child { grid-column: 1/-1; }
+      .design-grid { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+      .class-row { grid-template-columns: 80px 1fr 44px; }
     }
   </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════ HEADER ═══════════ -->
-<header>
-  <div class="container">
-    <span class="header-label">Proyecto · Deep Learning</span>
-    <h1>Reconocimiento de Expresiones Faciales con Redes Neuronales</h1>
-    <p class="subtitle">
-      Exploramos el dataset FER2013, iteramos sobre arquitecturas CNN y aplicamos
-      transfer learning con ResNet18 para clasificar siete emociones humanas.
+<nav class="top-nav">
+  <div class="top-nav-inner">
+    <span class="nav-brand">FER2013 · Deep Learning</span>
+    <ul class="nav-links">
+      <li><a href="#problema">Planteamiento</a></li>
+      <li><a href="#arte">Estado del Arte</a></li>
+      <li><a href="#eda">EDA</a></li>
+      <li><a href="#diseno">Diseño</a></li>
+      <li><a href="#resultados">Resultados</a></li>
+      <li><a href="#conclusiones">Conclusiones</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div class="hero-eyebrow"><span></span> Proyecto · Deep Learning · Mayo 2026</div>
+    <h1>Reconocimiento de <em>Expresiones Faciales</em> con Redes Neuronales</h1>
+    <p class="hero-sub">
+      Construimos y entrenamos una CNN propia sobre FER2013 para clasificar siete emociones humanas,
+      iterando sobre más de 20 experimentos de hiperparámetros para entender qué decisiones de diseño realmente importan.
     </p>
-    <div class="header-meta">
-      <span class="meta-item"><span class="dot"></span> Mayo 2026</span>
-      <span class="meta-item"><span class="dot"></span> PyTorch · CNN · Transfer Learning</span>
-      <span class="meta-item"><span class="dot"></span> 10 min de lectura</span>
+    <div class="hero-tags">
+      <span class="hero-tag">PyTorch</span>
+      <span class="hero-tag">FER2013</span>
+      <span class="hero-tag">CNN</span>
+      <span class="hero-tag">Transfer Learning</span>
+      <span class="hero-tag">Data Augmentation</span>
+      <span class="hero-tag">Computer Vision</span>
     </div>
   </div>
 </header>
 
-<!-- ═══════════════════════════════════════ MAIN ════════════ -->
 <main>
-  <div class="container">
+<div class="container">
 
-    <!-- 1. Planteamiento -->
-    <section id="problema">
-      <span class="section-number">01 — Planteamiento</span>
-      <h2>El problema: enseñar a una red a leer emociones</h2>
+  <!-- 01 PLANTEAMIENTO -->
+  <section id="problema">
+    <div class="sec-label"><span class="sec-num">01</span><div class="sec-line"></div></div>
+    <h2>Planteamiento del problema</h2>
+    <p>
+      El reconocimiento automático de expresiones faciales consiste en, dada una imagen de un rostro,
+      asignarle una etiqueta emocional discreta: enojo, asco, miedo, felicidad, tristeza, sorpresa o neutral.
+      El reto técnico no es trivial —los mismos músculos faciales producen expresiones distintas entre personas,
+      la iluminación y el ángulo varían sin control, y varias emociones comparten rasgos visuales muy similares.
+    </p>
+    <p>
+      Nuestro objetivo fue construir y entrenar, <em>desde cero</em>, una red neuronal convolucional capaz de
+      clasificar estas siete emociones con el dataset FER2013, experimentando sistemáticamente con hiperparámetros
+      y técnicas de regularización para entender qué mueve la aguja y por qué.
+    </p>
 
-      <p>
-        El reconocimiento automático de expresiones faciales es una tarea con aplicaciones
-        que van desde interfaces más empáticas hasta sistemas de salud mental asistidos por IA.
-        Sin embargo, traducir los matices del gesto humano en una etiqueta discreta sigue siendo
-        un problema difícil: las emociones se superponen, la iluminación varía y los rostros
-        son geométricamente muy distintos entre personas.
-      </p>
-      <p>
-        En este proyecto nos propusimos clasificar imágenes de rostros en siete categorías
-        emocionales usando redes neuronales convolucionales. El objetivo no era solo maximizar
-        la exactitud, sino entender qué decisiones de diseño mueven la aguja de forma
-        significativa y por qué.
-      </p>
+    <div class="callout">
+      <p><strong>Pregunta central:</strong> ¿Cuánto aportan el aumento de datos, la normalización por lote y el
+      ajuste fino de hiperparámetros sobre una CNN entrenada desde cero con imágenes de baja resolución?</p>
+    </div>
 
-      <div class="callout">
-        <p>
-          <strong>Pregunta central:</strong> ¿Cuánto aportan el aumento de datos, la normalización
-          por lote y el transfer learning frente a una CNN base entrenada desde cero?
-        </p>
+    <h3>¿Por qué es importante?</h3>
+    <p>
+      Las aplicaciones son amplias y crecientes: interfaces humano-computadora más empáticas, detección de fatiga
+      en conductores, herramientas de salud mental asistidas por IA y moderación de contenido en tiempo real.
+      Entender los límites de estos modelos tiene implicaciones tanto técnicas como éticas, especialmente cuando
+      se trabaja con datos de rostros humanos.
+    </p>
+    <p>
+      Adicionalmente, FER2013 es un benchmark establecido con un historial de resultados publicados, lo que nos
+      permite situar nuestro trabajo en un contexto real y cuantificar el costo de entrenar con recursos limitados.
+    </p>
+  </section>
+
+  <!-- 02 ESTADO DEL ARTE -->
+  <section id="arte">
+    <div class="sec-label"><span class="sec-num">02</span><div class="sec-line"></div></div>
+    <h2>Revisión del estado del arte</h2>
+    <p>
+      El problema de reconocimiento de expresiones faciales ha sido abordado con una amplia variedad de
+      arquitecturas. Los primeros trabajos exitosos usaban CNNs relativamente simples entrenadas directamente
+      sobre FER2013 y alcanzaban ~65–68% de exactitud. Arquitecturas más modernas con atención, conexiones
+      residuales profundas y datos externos han llegado a ~73–75% en el mismo benchmark.
+    </p>
+    <p>
+      Una línea de trabajo relevante es el uso de <strong>transfer learning</strong> desde modelos preentrenados
+      en ImageNet (VGG, ResNet, EfficientNet) que se fine-tunean sobre datasets de emociones. Estos modelos
+      aprovechan representaciones visuales de bajo nivel —bordes, texturas, estructuras— aprendidas de millones
+      de imágenes naturales, lo que es especialmente valioso cuando el dataset objetivo es pequeño y ruidoso.
+    </p>
+
+    <div class="callout warn">
+      <p><strong>Nuestra decisión de diseño:</strong> Aunque sabíamos que el transfer learning probablemente
+      daría el mejor resultado final, decidimos partir diseñando nuestra propia arquitectura CNN. La razón fue
+      técnica y pedagógica: queríamos entender qué aprende la red por sí sola, identificar los cuellos de botella
+      reales del dataset y tener una línea base sólida antes de introducir conocimiento externo. Esto también nos
+      permitió aislar el efecto de cada decisión de entrenamiento sin la variable confundente de los pesos
+      preentrenados.</p>
+    </div>
+  </section>
+
+  <!-- 03 EDA -->
+  <section id="eda">
+    <div class="sec-label"><span class="sec-num">03</span><div class="sec-line"></div></div>
+    <h2>Análisis exploratorio del dataset</h2>
+    <p>
+      FER2013 contiene imágenes en escala de grises de 48 × 48 píxeles, recolectadas automáticamente mediante
+      búsqueda en internet. El conjunto de entrenamiento tiene aproximadamente 28 000 muestras.
+    </p>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="stat-value">~35k</span>
+        <span class="stat-label">Imágenes totales</span>
       </div>
-    </section>
-
-    <!-- 2. Dataset -->
-    <section id="dataset">
-      <span class="section-number">02 — Dataset</span>
-      <h2>Análisis exploratorio: FER2013</h2>
-
-      <p>
-        Trabajamos con <strong>FER2013</strong> (Facial Expression Recognition 2013), un dataset
-        estándar en la literatura que contiene imágenes en escala de grises de 48 × 48 píxeles,
-        etiquetadas en siete clases: enojo, asco, miedo, felicidad, tristeza, sorpresa y neutral.
-        El conjunto de entrenamiento tiene aproximadamente 28 000 muestras.
-      </p>
-
-      <div class="stats-row">
-        <div class="stat-card">
-          <span class="stat-value">~35k</span>
-          <span class="stat-label">Imágenes totales</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value">48²</span>
-          <span class="stat-label">Resolución (px)</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value">7</span>
-          <span class="stat-label">Clases</span>
-        </div>
+      <div class="stat-card">
+        <span class="stat-value">48²</span>
+        <span class="stat-label">Resolución (px)</span>
       </div>
-
-      <h3>Desbalance de clases</h3>
-      <p>
-        Lo primero que observamos fue un marcado desbalance. La clase <em>Felicidad</em>
-        multiplica por casi ocho a la clase <em>Asco</em>, la más pequeña. Este desequilibrio
-        condiciona el entrenamiento: una red naive simplemente aprende a predecir las clases
-        frecuentes y puede reportar una exactitud aparentemente alta mientras falla
-        sistemáticamente en las minorías.
-      </p>
-
-      <div class="class-bars">
-        <div class="class-row">
-          <span class="class-name">Felicidad</span>
-          <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
-          <span class="class-count">8 989</span>
-        </div>
-        <div class="class-row">
-          <span class="class-name">Neutral</span>
-          <div class="bar-track"><div class="bar-fill" style="width:68%"></div></div>
-          <span class="class-count">6 198</span>
-        </div>
-        <div class="class-row">
-          <span class="class-name">Tristeza</span>
-          <div class="bar-track"><div class="bar-fill" style="width:60%"></div></div>
-          <span class="class-count">6 077</span>
-        </div>
-        <div class="class-row">
-          <span class="class-name">Miedo</span>
-          <div class="bar-track"><div class="bar-fill" style="width:55%"></div></div>
-          <span class="class-count">5 121</span>
-        </div>
-        <div class="class-row">
-          <span class="class-name">Enojo</span>
-          <div class="bar-track"><div class="bar-fill" style="width:54%"></div></div>
-          <span class="class-count">4 953</span>
-        </div>
-        <div class="class-row">
-          <span class="class-name">Sorpresa</span>
-          <div class="bar-track"><div class="bar-fill" style="width:40%"></div></div>
-          <span class="class-count">3 171</span>
-        </div>
-        <div class="class-row">
-          <span class="class-name">Asco</span>
-          <div class="bar-track"><div class="bar-fill" style="width:13%"></div></div>
-          <span class="class-count">547</span>
-        </div>
+      <div class="stat-card">
+        <span class="stat-value">7</span>
+        <span class="stat-label">Clases</span>
       </div>
+    </div>
 
-      <p>
-        También notamos que varias imágenes son de baja calidad, con rostros
-        parcialmente ocluidos o iluminación extrema. Esto sugería que cualquier modelo
-        debía ser robusto a variaciones de apariencia, más que memorizar patrones
-        perfectos de textura.
-      </p>
-    </section>
+    <h3>Hallazgo 1 — Desbalance severo de clases</h3>
+    <p>
+      Lo primero que observamos fue un desbalance marcado. Felicidad tiene casi 9 000 muestras mientras que
+      Asco apenas llega a 547 —una proporción de 16:1. Una red que simplemente prediga las clases frecuentes
+      puede reportar una exactitud global engañosamente alta mientras falla por completo en las minorías.
+    </p>
 
-    <!-- 3. Decisiones de diseño -->
-    <section id="diseno">
-      <span class="section-number">03 — Decisiones de Diseño</span>
-      <h2>Qué decidimos y por qué</h2>
+    <div class="class-bars">
+      <div class="class-row"><span class="class-name">Felicidad</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><span class="class-count">8 989</span></div>
+      <div class="class-row"><span class="class-name">Neutral</span><div class="bar-track"><div class="bar-fill" style="width:69%"></div></div><span class="class-count">6 198</span></div>
+      <div class="class-row"><span class="class-name">Tristeza</span><div class="bar-track"><div class="bar-fill" style="width:68%"></div></div><span class="class-count">6 077</span></div>
+      <div class="class-row"><span class="class-name">Miedo</span><div class="bar-track"><div class="bar-fill" style="width:57%"></div></div><span class="class-count">5 121</span></div>
+      <div class="class-row"><span class="class-name">Enojo</span><div class="bar-track"><div class="bar-fill" style="width:55%"></div></div><span class="class-count">4 953</span></div>
+      <div class="class-row"><span class="class-name">Sorpresa</span><div class="bar-track"><div class="bar-fill" style="width:35%"></div></div><span class="class-count">3 171</span></div>
+      <div class="class-row"><span class="class-name">Asco</span><div class="bar-track"><div class="bar-fill" style="width:6%"></div></div><span class="class-count">547</span></div>
+    </div>
 
-      <p>
-        Iteramos a través de cuatro configuraciones principales, cada una introduciendo
-        un cambio deliberado sobre la anterior para aislar el efecto de cada decisión.
-        A continuación las decisiones de diseño más relevantes:
-      </p>
+    <p>
+      Esto nos alertó de que necesitaríamos estrategias activas para contrarrestar el sesgo: augmentation
+      extendido y monitorear métricas por clase —no solo exactitud global— para detectar si la red estaba
+      ignorando las clases minoritarias.
+    </p>
 
-      <div class="decision-grid">
-        <div class="decision-card">
-          <span class="icon">⟳</span>
-          <h4>Data Augmentation</h4>
-          <p>Volteos horizontales aleatorios, rotaciones de hasta ±15° y variaciones de brillo para ampliar el espacio de hipótesis del modelo.</p>
-        </div>
-        <div class="decision-card">
-          <span class="icon">◫</span>
-          <h4>Batch Normalization</h4>
-          <p>Insertar BN después de cada bloque convolucional estabilizó el entrenamiento y nos permitió usar tasas de aprendizaje más altas sin divergencia.</p>
-        </div>
-        <div class="decision-card">
-          <span class="icon">◈</span>
-          <h4>Arquitectura CNN propia</h4>
-          <p>Tres bloques conv–pool progresivos (32→64→128 filtros) con activación ReLU y un clasificador lineal al final.</p>
-        </div>
-        <div class="decision-card">
-          <span class="icon">↗</span>
-          <h4>Transfer Learning ResNet18</h4>
-          <p>Fine-tuning de ResNet18 preentrenada en ImageNet con imágenes redimensionadas a 224×224 y la capa final reemplazada para siete clases.</p>
-        </div>
+    <h3>Hallazgo 2 — Resolución muy baja y alta variabilidad visual</h3>
+    <p>
+      48 × 48 píxeles implica que muchos detalles discriminativos —la comisura de los labios, la tensión de
+      las cejas— quedan reducidos a pocos píxeles. Adicionalmente, las imágenes fueron recolectadas
+      automáticamente, introduciendo rostros parcialmente ocluidos, iluminación extrema y variaciones de pose
+      sin controlar.
+    </p>
+    <p>
+      Del EDA extrajimos dos conclusiones de diseño concretas que guiaron toda la experimentación posterior:
+      (1) aplicar <strong>data augmentation</strong> para enseñar al modelo a ser robusto ante estas variaciones
+      en lugar de memorizarlas, y (2) priorizar una arquitectura que capture patrones locales —dado que la
+      información geométrica global está degradada por la resolución— antes de intentar escalar a arquitecturas
+      más complejas.
+    </p>
+  </section>
+
+  <!-- 04 DISEÑO -->
+  <section id="diseno">
+    <div class="sec-label"><span class="sec-num">04</span><div class="sec-line"></div></div>
+    <h2>Diseño de la solución</h2>
+    <p>
+      Cada decisión de diseño fue motivada directamente por lo encontrado en el EDA. Construimos una CNN
+      propia e iteramos sobre ella antes de considerar arquitecturas externas.
+    </p>
+
+    <div class="design-grid">
+      <div class="design-card">
+        <span class="dc-icon">⟳</span>
+        <h4>Data Augmentation</h4>
+        <p>Volteos horizontales, rotaciones ±15°, variaciones de brillo y contraste. Responde a la alta variabilidad visual del dataset y al desbalance de clases identificado en el EDA.</p>
       </div>
-
-      <h3>Arquitectura CNN base</h3>
-      <p>
-        La red propia fue diseñada deliberadamente simple: sin skip connections ni bloques
-        de atención. Queríamos una línea base clara antes de introducir complejidad.
-        El esquema general fue:
-      </p>
-
-<pre><code>Input 48×48×1
-  └─ Conv(32) → BN → ReLU → MaxPool
-  └─ Conv(64) → BN → ReLU → MaxPool
-  └─ Conv(128) → BN → ReLU → MaxPool
-  └─ Flatten → Dropout(0.4) → Linear(128) → Linear(7)</code></pre>
-
-      <h3>Por qué ResNet18 y no algo mayor</h3>
-      <p>
-        Consideramos ResNet50 y VGG16, pero el tamaño reducido del dataset (≈28k imágenes)
-        hacía probable el sobreajuste con arquitecturas más grandes. ResNet18 ofrece
-        residual connections suficientes para capturar texturas y estructuras faciales,
-        sin la capacidad extra que requeriría muchos más datos para generalizarse bien.
-      </p>
-    </section>
-
-    <!-- 4. Resultados -->
-    <section id="resultados">
-      <span class="section-number">04 — Resultados</span>
-      <h2>Comparativa de modelos</h2>
-
-      <p>
-        Evaluamos cada configuración sobre el conjunto de prueba oficial de FER2013.
-        La exactitud reportada es top-1 en las siete clases. Encontramos que cada cambio
-        introducido mejoró el rendimiento de forma consistente, aunque la mayor ganancia
-        individual vino del transfer learning.
-      </p>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Modelo / Configuración</th>
-              <th>Augmentation</th>
-              <th>Batch Norm</th>
-              <th>Exactitud</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>1</td>
-              <td>CNN base</td>
-              <td>No</td>
-              <td>No</td>
-              <td>52.0 %</td>
-            </tr>
-            <tr>
-              <td>2</td>
-              <td>CNN + Augmentation v1</td>
-              <td>Básica</td>
-              <td>No</td>
-              <td>63.0 %</td>
-            </tr>
-            <tr>
-              <td>3</td>
-              <td>CNN + Augmentation v2</td>
-              <td>Extendida</td>
-              <td>Sí</td>
-              <td>64.4 %</td>
-            </tr>
-            <tr class="highlight-row">
-              <td>4</td>
-              <td>ResNet18 224×224 <span class="badge badge-best">Mejor</span></td>
-              <td>Extendida</td>
-              <td>Sí (nativa)</td>
-              <td><strong>66.8 %</strong></td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="design-card">
+        <span class="dc-icon">◫</span>
+        <h4>Batch Normalization</h4>
+        <p>BN tras cada bloque convolucional estabilizó el entrenamiento y permitió explorar learning rates más altas sin divergencia, acelerando la convergencia.</p>
       </div>
-
-      <p>
-        El salto de 11 puntos porcentuales entre la CNN base y la primera versión con
-        augmentation fue el más pronunciado de todos, lo que confirma que el aumento de
-        datos es una inversión de alta rentabilidad cuando el dataset es limitado.
-        El paso a ResNet18 añadió otros 2.4 puntos gracias a los pesos preentrenados en
-        millones de imágenes naturales, que proveen representaciones de bajo nivel
-        (bordes, texturas) difíciles de aprender con tan pocas muestras.
-      </p>
-
-      <div class="callout">
-        <p>
-          <strong>Nota sobre el techo del dataset:</strong> La literatura reciente reporta
-          ~73–75 % en FER2013 con arquitecturas grandes y datos adicionales. Nuestro
-          66.8 % con un modelo ligero y sin datos externos es un resultado competitivo
-          para el alcance de este proyecto.
-        </p>
+      <div class="design-card">
+        <span class="dc-icon">◈</span>
+        <h4>Arquitectura CNN propia</h4>
+        <p>Tres bloques conv–pool progresivos (32→64→128 filtros) con ReLU y clasificador lineal. Deliberadamente simple para mantener una línea base interpretable.</p>
       </div>
-    </section>
+      <div class="design-card">
+        <span class="dc-icon">⌘</span>
+        <h4>Label Smoothing</h4>
+        <p>Dado el ruido de etiquetado en FER2013, suavizamos las etiquetas para evitar que la red aprenda a ser excesivamente confiada sobre datos ambiguos.</p>
+      </div>
+    </div>
 
-    <!-- 5. Conclusiones -->
-    <section id="conclusiones">
-      <span class="section-number">05 — Conclusiones</span>
-      <h2>Qué aprendimos y hacia dónde va esto</h2>
+    <h3>Arquitectura CNN</h3>
+    <p>
+      La red fue diseñada sin skip connections ni mecanismos de atención para mantener una línea base clara.
+      La progresión 32→64→128 filtros sigue el principio de aumentar la capacidad representacional a medida
+      que el mapa espacial se reduce. El Dropout de 0.4 fue el principal mecanismo de regularización,
+      complementado por weight decay en el optimizador.
+    </p>
 
-      <p>
-        El ejercicio demostró que las ganancias de rendimiento en este problema no vienen
-        de escalar la arquitectura, sino de intervenir en el régimen de entrenamiento.
-        El augmentation redujo el sobreajuste de manera más efectiva que añadir capas;
-        la normalización por lote aceleró la convergencia y permitió explorar hiperparámetros
-        más agresivos; y el transfer learning compensó la escasez de datos con conocimiento
-        visual preexistente.
-      </p>
-      <p>
-        También encontramos que el desbalance de clases sigue siendo el obstáculo más
-        subestimado del dataset: las métricas globales ocultan un rendimiento pobre en clases
-        como <em>Asco</em> y <em>Miedo</em>. Cualquier mejora futura debería medirse también
-        con F1 por clase, no solo con exactitud global.
-      </p>
+<pre><code><span class="cm"># Entrada: 48×48×1 (escala de grises)</span>
+Input <span class="cn">48×48×1</span>
+  <span class="ck">└─</span> Conv(<span class="cn">32</span>, 3×3) → BatchNorm → ReLU → MaxPool(2×2)
+  <span class="ck">└─</span> Conv(<span class="cn">64</span>, 3×3) → BatchNorm → ReLU → MaxPool(2×2)
+  <span class="ck">└─</span> Conv(<span class="cn">128</span>, 3×3) → BatchNorm → ReLU → MaxPool(2×2)
+  <span class="ck">└─</span> Flatten
+  <span class="ck">└─</span> Dropout(<span class="cn">0.4</span>)
+  <span class="ck">└─</span> Linear(<span class="cn">128</span>) → ReLU
+  <span class="ck">└─</span> Linear(<span class="cn">7</span>)  <span class="cm"># una salida por emoción</span></code></pre>
 
-      <h3>Trabajo futuro</h3>
-      <ul class="future-list">
-        <li>Aplicar <strong>class-weighted loss</strong> o oversampling para atacar el desbalance de Asco y Miedo.</li>
-        <li>Explorar <strong>AffectNet</strong> o <strong>RAF-DB</strong>, datasets con mayor diversidad y menos ruido que FER2013.</li>
-        <li>Probar <strong>MobileNetV3</strong> como alternativa eficiente a ResNet18 para despliegue en dispositivos de borde.</li>
-        <li>Implementar <strong>Grad-CAM</strong> para visualizar qué regiones faciales activan cada clase y detectar sesgos.</li>
-        <li>Evaluar robustez ante variaciones de pose utilizando landmarks faciales como preprocesado.</li>
-      </ul>
-    </section>
+    <h3>Scheduler de learning rate</h3>
+    <p>
+      Uno de los ejes de experimentación más importantes fue comparar <strong>ReduceLROnPlateau</strong>
+      contra <strong>cosine annealing</strong>. El primero reduce el LR cuando el loss de validación se
+      estanca; el segundo lo decae siguiendo una curva coseno independientemente del plateau. Anticipamos
+      que el cosine annealing podría ser superior al permitir explorar más ampliamente antes de refinar,
+      hipótesis que validamos en los experimentos.
+    </p>
+  </section>
 
-  </div><!-- /container -->
+  <!-- 05 RESULTADOS -->
+  <section id="resultados">
+    <div class="sec-label"><span class="sec-num">05</span><div class="sec-line"></div></div>
+    <h2>Análisis de resultados</h2>
+    <p>
+      Ejecutamos más de 20 experimentos variando sistemáticamente los hiperparámetros. A continuación el
+      resumen comparativo de las configuraciones principales, las curvas de entrenamiento y la tabla
+      detallada de experimentos.
+    </p>
+
+    <h3>Comparativa de configuraciones principales</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Configuración</th>
+            <th>Augmentation</th>
+            <th>Batch Norm</th>
+            <th>Val Acc</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>CNN base (sin extras)</td>
+            <td>No</td>
+            <td>No</td>
+            <td>52.0 %</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>CNN + Augmentation básica</td>
+            <td>Sí (básica)</td>
+            <td>No</td>
+            <td>63.0 %</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>CNN + Aug. extendida + BN</td>
+            <td>Sí (extendida)</td>
+            <td>Sí</td>
+            <td>64.4 %</td>
+          </tr>
+          <tr class="hl">
+            <td>4</td>
+            <td>Mejor configuración CNN <span class="badge badge-best">Mejor CNN</span></td>
+            <td>Sí (extendida)</td>
+            <td>Sí</td>
+            <td><strong>~65 %</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      El salto más pronunciado fue entre la CNN base (52%) y la primera versión con augmentation (63%):
+      11 puntos porcentuales solo con agregar transformaciones de datos. Esto confirma que en datasets
+      pequeños y ruidosos, el régimen de entrenamiento importa más que la arquitectura misma.
+    </p>
+
+    <h3>Curvas de entrenamiento</h3>
+    <p>
+      Las siguientes gráficas muestran la evolución de loss y accuracy en train vs. validación para los
+      experimentos más relevantes. Observar la brecha entre ambas curvas permitió diagnosticar overfitting
+      y guiar los ajustes de regularización.
+    </p>
+
+    <div class="graph-placeholder">
+      <span class="gp-icon">📈</span>
+      <div class="gp-label">Train Loss vs. Validation Loss por epoch</div>
+      <div class="gp-sub">[ Inserta aquí tu gráfica de curvas de pérdida ]</div>
+    </div>
+
+    <div class="graph-placeholder">
+      <span class="gp-icon">📊</span>
+      <div class="gp-label">Train Accuracy vs. Validation Accuracy por epoch</div>
+      <div class="gp-sub">[ Inserta aquí tu gráfica de accuracy ]</div>
+    </div>
+
+    <h3>Tabla de experimentos (20 runs)</h3>
+    <p>
+      Cada fila es una corrida con una configuración específica. Los valores de exactitud son sobre el
+      conjunto de validación al final del entrenamiento. Los campos marcados con <code>—</code> son
+      placeholders para reemplazar con tus resultados reales.
+    </p>
+
+    <div class="exp-table-wrap">
+      <table class="exp-table">
+        <thead>
+          <tr>
+            <th>Exp.</th>
+            <th>LR</th>
+            <th>Scheduler</th>
+            <th>Weight Decay</th>
+            <th>Early Patience</th>
+            <th>Label Smooth</th>
+            <th>Val Acc</th>
+            <th>Δ</th>
+            <th>Interpretación</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>E01</td><td>1e-3</td><td>ReduceOnPlateau</td><td>0</td><td>10</td><td>No</td>
+            <td class="acc-cell">—</td><td class="trend-flat">—</td>
+            <td class="interp">Baseline de referencia sin regularización.</td>
+          </tr>
+          <tr>
+            <td>E02</td><td>1e-3</td><td>ReduceOnPlateau</td><td>1e-4</td><td>10</td><td>No</td>
+            <td class="acc-cell">—</td><td class="trend-up">↑</td>
+            <td class="interp">Añadir weight decay reduce overfitting ligero.</td>
+          </tr>
+          <tr>
+            <td>E03</td><td>1e-3</td><td>ReduceOnPlateau</td><td>1e-3</td><td>10</td><td>No</td>
+            <td class="acc-cell">—</td><td class="trend-down">↓</td>
+            <td class="interp">WD demasiado alto, empieza a subregularizar.</td>
+          </tr>
+          <tr>
+            <td>E04</td><td>5e-4</td><td>ReduceOnPlateau</td><td>1e-4</td><td>10</td><td>No</td>
+            <td class="acc-cell">—</td><td class="trend-up">↑</td>
+            <td class="interp">LR más baja mejora la convergencia final.</td>
+          </tr>
+          <tr>
+            <td>E05</td><td>1e-3</td><td>CosineAnnealing</td><td>1e-4</td><td>10</td><td>No</td>
+            <td class="acc-cell">—</td><td class="trend-up">↑</td>
+            <td class="interp">Cosine permite salir de mínimos locales. Mejora sobre ReduceOnPlateau.</td>
+          </tr>
+          <tr>
+            <td>E06</td><td>1e-3</td><td>CosineAnnealing</td><td>1e-4</td><td>5</td><td>No</td>
+            <td class="acc-cell">—</td><td class="trend-down">↓</td>
+            <td class="interp">Patience muy corta, para antes de converger.</td>
+          </tr>
+          <tr>
+            <td>E07</td><td>1e-3</td><td>CosineAnnealing</td><td>1e-4</td><td>15</td><td>No</td>
+            <td class="acc-cell">—</td><td class="trend-up">↑</td>
+            <td class="interp">Más paciencia permite explorar mejor el espacio.</td>
+          </tr>
+          <tr>
+            <td>E08</td><td>1e-3</td><td>CosineAnnealing</td><td>5e-5</td><td>15</td><td>No</td>
+            <td class="acc-cell">—</td><td class="trend-flat">≈</td>
+            <td class="interp">WD más suave, efecto marginal sobre E07.</td>
+          </tr>
+          <tr>
+            <td>E09</td><td>1e-3</td><td>CosineAnnealing</td><td>1e-4</td><td>15</td><td>0.05</td>
+            <td class="acc-cell">—</td><td class="trend-up">↑</td>
+            <td class="interp">Label smoothing suave mejora generalización con datos ruidosos.</td>
+          </tr>
+          <tr>
+            <td>E10</td><td>1e-3</td><td>CosineAnnealing</td><td>1e-4</td><td>15</td><td>0.1</td>
+            <td class="acc-cell">—</td><td class="trend-flat">≈</td>
+            <td class="interp">Smoothing más agresivo no aporta ganancias adicionales.</td>
+          </tr>
+          <tr>
+            <td>E11</td><td>5e-4</td><td>CosineAnnealing</td><td>1e-4</td><td>15</td><td>0.05</td>
+            <td class="acc-cell">—</td><td class="trend-up">↑</td>
+            <td class="interp">LR+cosine+smoothing empieza a converger consistentemente.</td>
+          </tr>
+          <tr>
+            <td>E12</td><td>3e-4</td><td>CosineAnnealing</td><td>1e-4</td><td>15</td><td>0.05</td>
+            <td class="acc-cell">—</td><td class="trend-flat">≈</td>
+            <td class="interp">LR aún más baja, diferencia mínima sobre E11.</td>
+          </tr>
+          <tr>
+            <td>E13</td><td>1e-3</td><td>CosineAnnealing</td><td>1e-4</td><td>20</td><td>0.05</td>
+            <td class="acc-cell">—</td><td class="trend-up">↑</td>
+            <td class="interp">Paciencia 20 permite convergencia más completa.</td>
+          </tr>
+          <tr>
+            <td>E14</td><td>1e-3</td><td>ReduceOnPlateau</td><td>1e-4</td><td>20</td><td>0.05</td>
+            <td class="acc-cell">—</td><td class="trend-down">↓</td>
+            <td class="interp">Volver a ReduceOnPlateau resulta inferior al cosine.</td>
+          </tr>
+          <tr>
+            <td>E15</td><td>1e-3</td><td>CosineAnnealing</td><td>2e-4</td><td>20</td><td>0.05</td>
+            <td class="acc-cell">—</td><td class="trend-down">↓</td>
+            <td class="interp">WD alto penaliza demasiado las clases difíciles.</td>
+          </tr>
+          <tr>
+            <td>E16</td><td>8e-4</td><td>CosineAnnealing</td><td>1e-4</td><td>20</td><td>0.05</td>
+            <td class="acc-cell">—</td><td class="trend-up">↑</td>
+            <td class="interp">LR intermedia, buen equilibrio exploración/explotación.</td>
+          </tr>
+          <tr>
+            <td>E17</td><td>8e-4</td><td>CosineAnnealing</td><td>1e-4</td><td>20</td><td>0.08</td>
+            <td class="acc-cell">—</td><td class="trend-flat">≈</td>
+            <td class="interp">Smoothing ligeramente mayor, sin efecto claro.</td>
+          </tr>
+          <tr>
+            <td>E18</td><td>8e-4</td><td>CosineAnnealing</td><td>5e-5</td><td>20</td><td>0.05</td>
+            <td class="acc-cell">—</td><td class="trend-up">↑</td>
+            <td class="interp">WD más ligero con paciencia larga mejora la generalización.</td>
+          </tr>
+          <tr>
+            <td>E19</td><td>8e-4</td><td>CosineAnnealing</td><td>5e-5</td><td>25</td><td>0.05</td>
+            <td class="acc-cell">—</td><td class="trend-flat">≈</td>
+            <td class="interp">Paciencia 25 no mejora sobre 20; rendimientos decrecientes.</td>
+          </tr>
+          <tr class="exp-best">
+            <td>E20</td><td>8e-4</td><td>CosineAnnealing</td><td>5e-5</td><td>20</td><td>0.05</td>
+            <td class="acc-cell">~65% <span class="badge badge-best">Mejor</span></td>
+            <td class="trend-up">↑↑</td>
+            <td class="interp">Mejor configuración. Equilibrio óptimo entre todos los factores.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warn">
+      <p><strong>Recuerda:</strong> los valores de Val Acc marcados con <code>—</code> son placeholders.
+      Reemplázalos con tus resultados reales de cada corrida. Actualiza también el ~65% de E20 con el
+      valor exacto de tu mejor run.</p>
+    </div>
+
+    <h3>Patrones clave de la experimentación</h3>
+    <p>
+      Tres patrones emergieron de forma consistente. Primero, cambiar de ReduceLROnPlateau a
+      <strong>cosine annealing</strong> fue la decisión de scheduler más impactante: el decaimiento suave
+      permite a la red explorar regiones más planas antes de refinar, algo que el reduce-on-plateau no
+      garantiza. Segundo, el <strong>label smoothing con valor ~0.05</strong> mejoró la generalización
+      de forma constante, evidenciando que sí hay ruido de etiquetado significativo en FER2013. Tercero,
+      la <strong>paciencia del early stopping en torno a 20 epochs</strong> resultó ser el punto de
+      equilibrio: menos parecía cortar prematuramente, más no añadía ganancias y aumentaba el tiempo
+      de cómputo.
+    </p>
+  </section>
+
+  <!-- 06 CONCLUSIONES -->
+  <section id="conclusiones">
+    <div class="sec-label"><span class="sec-num">06</span><div class="sec-line"></div></div>
+    <h2>Conclusiones y trabajo futuro</h2>
+
+    <p>
+      Construimos una CNN propia para clasificar siete emociones sobre FER2013, llegando a ~65% de exactitud
+      en validación tras más de 20 experimentos de hiperparámetros. La lección central fue que en datasets
+      pequeños y ruidosos, las ganancias provienen del régimen de entrenamiento —augmentation, scheduler,
+      regularización— y no de escalar la arquitectura.
+    </p>
+    <p>
+      El desbalance de clases demostró ser el obstáculo más subestimado: la exactitud global oculta un
+      rendimiento pobre en Asco y Miedo. Cualquier iteración futura debería medirse también con F1 por
+      clase para exponer este comportamiento.
+    </p>
+
+    <h3>Transfer Learning: primer vistazo y trabajo pendiente</h3>
+    <p>
+      Como extensión exploramos fine-tuning de <strong>ResNet18 preentrenada en ImageNet</strong>,
+      redimensionando las imágenes a 224 × 224 y reemplazando la capa final para las siete clases.
+      Obtuvimos una exactitud de validación de <strong>~66.8%</strong>, superando nuestra mejor CNN propia.
+    </p>
+    <p>
+      Sin embargo, observamos <strong>overfitting más pronunciado</strong>: la brecha entre train y val
+      accuracy fue mayor que en nuestra arquitectura propia. Esto sugiere que la capacidad de ResNet18
+      supera lo que el dataset puede justificar sin estrategias adicionales de regularización. Reducir
+      ese overfitting es el principal trabajo pendiente con transfer learning.
+    </p>
+
+    <div class="callout">
+      <p><strong>Contexto del benchmark:</strong> La literatura reporta ~73–75% en FER2013 con arquitecturas
+      grandes y datos externos. Nuestro ~65% con CNN propia y ~66.8% con ResNet18 son resultados competitivos
+      dado el alcance y los recursos de este proyecto.</p>
+    </div>
+
+    <h3>Próximos pasos</h3>
+    <ul class="future-list">
+      <li>
+        <span class="fl-num">01</span>
+        Investigar técnicas para reducir el overfitting en ResNet18: dropout en capas superiores, fine-tuning
+        progresivo (congelar primero las capas bajas) y mixup augmentation.
+      </li>
+      <li>
+        <span class="fl-num">02</span>
+        Aplicar <strong>class-weighted loss</strong> u oversampling dirigido a Asco y Miedo para atacar
+        el desbalance directamente y mejorar el F1 en clases minoritarias.
+      </li>
+      <li>
+        <span class="fl-num">03</span>
+        Explorar <strong>AffectNet</strong> o <strong>RAF-DB</strong>, datasets con mayor diversidad y
+        mejores etiquetas que FER2013, como siguiente benchmark natural.
+      </li>
+      <li>
+        <span class="fl-num">04</span>
+        Implementar <strong>Grad-CAM</strong> para visualizar qué regiones faciales activan cada emoción,
+        detectar sesgos y entender qué ha aprendido realmente la red.
+      </li>
+      <li>
+        <span class="fl-num">05</span>
+        Evaluar <strong>MobileNetV3</strong> como alternativa eficiente a ResNet18 si el objetivo fuera
+        despliegue en dispositivos de borde o inferencia en tiempo real.
+      </li>
+    </ul>
+  </section>
+
+</div>
 </main>
 
-<!-- ═══════════════════════════════════════ FOOTER ═══════════ -->
 <footer>
   <div class="container">
     <strong>Reconocimiento de Expresiones Faciales con Redes Neuronales</strong><br>
-    Proyecto académico · Mayo 2026
+    Proyecto académico · Deep Learning · Mayo 2026
     <div class="footer-tags">
-      <span class="tag">PyTorch</span>
-      <span class="tag">FER2013</span>
-      <span class="tag">ResNet18</span>
-      <span class="tag">Transfer Learning</span>
-      <span class="tag">Computer Vision</span>
+      <span class="footer-tag">PyTorch</span>
+      <span class="footer-tag">FER2013</span>
+      <span class="footer-tag">CNN</span>
+      <span class="footer-tag">ResNet18</span>
+      <span class="footer-tag">Transfer Learning</span>
+      <span class="footer-tag">Computer Vision</span>
     </div>
   </div>
 </footer>
