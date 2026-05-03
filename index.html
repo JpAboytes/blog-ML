@@ -235,7 +235,7 @@
 
 <nav class="top-nav">
   <div class="top-nav-inner">
-    <span class="nav-brand">FER2013 · Deep Learning</span>
+    <span class="nav-brand">ICC CETYS · Machine Learning</span>
     <ul class="nav-links">
       <li><a href="#problema">Planteamiento</a></li>
       <li><a href="#arte">Estado del Arte</a></li>
@@ -250,19 +250,16 @@
 <header class="hero">
   <div class="hero-grid"></div>
   <div class="hero-inner">
-    <div class="hero-eyebrow"><span></span> Proyecto · Deep Learning · Mayo 2026</div>
+    <div class="hero-eyebrow"><span></span> Proyecto · Machine Learning · Mayo 2026</div>
     <h1>Reconocimiento de <em>Expresiones Faciales</em> con Redes Neuronales</h1>
     <p class="hero-sub">
       Construimos y entrenamos una CNN propia sobre FER2013 para clasificar siete emociones humanas,
       iterando sobre más de 20 experimentos de hiperparámetros para entender qué decisiones de diseño realmente importan.
     </p>
     <div class="hero-tags">
-      <span class="hero-tag">PyTorch</span>
-      <span class="hero-tag">FER2013</span>
-      <span class="hero-tag">CNN</span>
-      <span class="hero-tag">Transfer Learning</span>
-      <span class="hero-tag">Data Augmentation</span>
-      <span class="hero-tag">Computer Vision</span>
+      <span class="hero-tag">Modelo el santo</span>
+      <span class="hero-tag">Equipo: JJJ</span>
+      <span class="hero-tag">Maestra: Jessica Borja</span>
     </div>
   </div>
 </header>
@@ -444,6 +441,10 @@ Input <span class="cn">48×48×1</span>
   <span class="ck">└─</span> Linear(<span class="cn">128</span>) → ReLU
   <span class="ck">└─</span> Linear(<span class="cn">7</span>)  <span class="cm"># una salida por emoción</span></code></pre>
 
+  <div style="background:#0f0f14; padding:1.75rem; border-radius:12px; margin-top:1rem; display:inline-block; width:100%;">
+    <img src="public/arquitectura.svg" alt="Diagrama de la arquitectura CNN" style="width:100%; max-width:600px; display:block; margin:0 auto; border-radius:6px;">
+  </div>
+
     <h3>Scheduler de learning rate</h3>
     <p>
       Uno de los ejes de experimentación más importantes fue comparar <strong>ReduceLROnPlateau</strong>
@@ -523,15 +524,15 @@ Input <span class="cn">48×48×1</span>
     </p>
 
     <div class="graph-placeholder">
-      <span class="gp-icon">📈</span>
-      <div class="gp-label">Train Loss vs. Validation Loss por epoch</div>
-      <div class="gp-sub">[ Inserta aquí tu gráfica de curvas de pérdida ]</div>
+      <img src="public/train-loss.png" alt="Gráfica de curvas de pérdida" style="width:100%; max-width:600px; display:block; margin:0 auto; border-radius:6px;">
+      <img src="public/val-loss.png" alt="Gráfica de curvas de pérdida" style="width:100%; max-width:600px; display:block; margin:0 auto; border-radius:6px;">
+      <div class="gp-label">Train Loss vs. Validation Loss por experimento</div>
     </div>
 
     <div class="graph-placeholder">
-      <span class="gp-icon">📊</span>
-      <div class="gp-label">Train Accuracy vs. Validation Accuracy por epoch</div>
-      <div class="gp-sub">[ Inserta aquí tu gráfica de accuracy ]</div>
+      <img src="public/train-acc.png" alt="Gráfica de curvas de pérdida" style="width:100%; max-width:600px; display:block; margin:0 auto; border-radius:6px;">
+      <img src="public/val-acc.png" alt="Gráfica de curvas de pérdida" style="width:100%; max-width:600px; display:block; margin:0 auto; border-radius:6px;">
+      <div class="gp-label">Train Accuracy vs. Validation Accuracy por experimento</div>
     </div>
 
     <h3>Tabla de experimentos (20 runs)</h3>
