@@ -395,19 +395,19 @@
 
     <h3>Hallazgo 1 — Desbalance severo de clases</h3>
     <p>
-      Lo primero que observamos fue un desbalance marcado. Felicidad tiene casi 9 000 muestras mientras que
-      Asco apenas llega a 547 —una proporción de 16:1. Una red que simplemente prediga las clases frecuentes
+      Lo primero que observamos fue un desbalance marcado. Alegría tiene 7 215 muestras mientras que
+      Disgusto apenas llega a 436 —una proporción de 16:1. Una red que simplemente prediga las clases frecuentes
       puede reportar una exactitud global engañosamente alta mientras falla por completo en las minorías.
     </p>
 
     <div class="class-bars">
-      <div class="class-row"><span class="class-name">Felicidad</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><span class="class-count">8 989</span></div>
-      <div class="class-row"><span class="class-name">Neutral</span><div class="bar-track"><div class="bar-fill" style="width:69%"></div></div><span class="class-count">6 198</span></div>
-      <div class="class-row"><span class="class-name">Tristeza</span><div class="bar-track"><div class="bar-fill" style="width:68%"></div></div><span class="class-count">6 077</span></div>
-      <div class="class-row"><span class="class-name">Miedo</span><div class="bar-track"><div class="bar-fill" style="width:57%"></div></div><span class="class-count">5 121</span></div>
-      <div class="class-row"><span class="class-name">Enojo</span><div class="bar-track"><div class="bar-fill" style="width:55%"></div></div><span class="class-count">4 953</span></div>
-      <div class="class-row"><span class="class-name">Sorpresa</span><div class="bar-track"><div class="bar-fill" style="width:35%"></div></div><span class="class-count">3 171</span></div>
-      <div class="class-row"><span class="class-name">Asco</span><div class="bar-track"><div class="bar-fill" style="width:6%"></div></div><span class="class-count">547</span></div>
+      <div class="class-row"><span class="class-name">Alegría</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><span class="class-count">7 215</span></div>
+      <div class="class-row"><span class="class-name">Neutral</span><div class="bar-track"><div class="bar-fill" style="width:69%"></div></div><span class="class-count">4 965</span></div>
+      <div class="class-row"><span class="class-name">Tristeza</span><div class="bar-track"><div class="bar-fill" style="width:67%"></div></div><span class="class-count">4 830</span></div>
+      <div class="class-row"><span class="class-name">Miedo</span><div class="bar-track"><div class="bar-fill" style="width:57%"></div></div><span class="class-count">4 097</span></div>
+      <div class="class-row"><span class="class-name">Enojo</span><div class="bar-track"><div class="bar-fill" style="width:55%"></div></div><span class="class-count">3 995</span></div>
+      <div class="class-row"><span class="class-name">Sorpresa</span><div class="bar-track"><div class="bar-fill" style="width:44%"></div></div><span class="class-count">3 171</span></div>
+      <div class="class-row"><span class="class-name">Disgusto</span><div class="bar-track"><div class="bar-fill" style="width:6%"></div></div><span class="class-count">436</span></div>
     </div>
 
     <p>
@@ -459,6 +459,11 @@
         <span class="dc-icon">⌘</span>
         <h4>Label Smoothing</h4>
         <p>Dado el ruido de etiquetado en FER2013, suavizamos las etiquetas para evitar que la red aprenda a ser excesivamente confiada sobre datos ambiguos.</p>
+      </div>
+      <div class="design-card">
+        <span class="dc-icon">⚖</span>
+        <h4>Class-Weighted Loss</h4>
+        <p>Pesos inversamente proporcionales a la frecuencia de cada clase. Disgusto recibe ~16× más peso que Alegría, obligando a la red a no ignorar las clases minoritarias.</p>
       </div>
     </div>
 
@@ -515,6 +520,36 @@ Input <span class="cn">48×48×1</span>
   <div style="background:#0f0f14; padding:1.75rem; border-radius:12px; margin-top:1rem; display:flex; justify-content:center; align-items:center;">
     <img src="/arquitectura.svg" alt="Diagrama de la arquitectura CNN" style="max-width:600px; width:100%; border-radius:6px;">
   </div>
+
+    <h3>Función de costo y optimizador</h3>
+    <p>
+      Usamos <code>CrossEntropyLoss</code> con dos modificaciones clave. Primero, pesos por clase para compensar
+      el desbalance: Disgusto tiene 436 muestras contra 7 215 de Alegría, una proporción de 16:1 que sin
+      corrección sesgaría la red hacia las clases mayoritarias. Segundo, <code>label_smoothing=0.15</code>
+      porque FER2013 tiene ruido de etiquetado conocido —imágenes ambiguas donde anotadores distintos
+      discrepan. El optimizador es Adam con <code>weight_decay=1e-4</code> como regularización L2 adicional.
+      El scheduler <code>CosineAnnealingLR</code> decae el learning rate suavemente hacia 1e-6, permitiendo
+      explorar ampliamente antes de refinar —demostramos en los experimentos que supera a
+      <code>ReduceLROnPlateau</code> en este dataset.
+    </p>
+
+<pre><code><span class="cm"># Pesos inversamente proporcionales a la frecuencia</span>
+weights = total / (n_classes × samples_per_class)
+
+criterion = nn.CrossEntropyLoss(
+    weight=class_weights,
+    label_smoothing=<span class="cn">0.15</span>   <span class="cm"># suaviza etiquetas ruidosas de FER2013</span>
+)
+optimizer = optim.Adam(
+    modelo.parameters(),
+    lr=<span class="cn">2e-4</span>,
+    weight_decay=<span class="cn">1e-4</span>      <span class="cm"># regularización L2</span>
+)
+scheduler = CosineAnnealingLR(
+    optimizer,
+    T_max=<span class="cn">100</span>,
+    eta_min=<span class="cn">1e-6</span>
+)</code></pre>
 
     <h3>Scheduler de learning rate</h3>
     <p>
@@ -746,7 +781,7 @@ Input <span class="cn">48×48×1</span>
             <td class="interp">Paciencia 25 no mejora sobre 20; rendimientos decrecientes.</td>
           </tr>
           <tr class="exp-best">
-            <td>E20</td><td>8e-4</td><td>CosineAnnealing</td><td>5e-5</td><td>20</td><td>0.05</td>
+            <td>E20</td><td>8e-4</td><td>CosineAnnealing</td><td>5e-5</td><td>20</td><td>0.15</td>
             <td class="acc-cell">~64% <span class="badge badge-best">Mejor</span></td>
             <td class="trend-up">↑↑</td>
             <td class="interp">Mejor configuración. Equilibrio óptimo entre todos los factores.</td>
