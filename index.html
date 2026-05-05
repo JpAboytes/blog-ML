@@ -317,8 +317,6 @@
     <p>
       El reconocimiento automático de expresiones faciales consiste en, dada una imagen de un rostro,
       asignarle una etiqueta emocional discreta: enojo, asco, miedo, felicidad, tristeza, sorpresa o neutral.
-      El reto técnico no es trivial —los mismos músculos faciales producen expresiones distintas entre personas,
-      la iluminación y el ángulo varían sin control, y varias emociones comparten rasgos visuales muy similares.
     </p>
     <p>
       Nuestro objetivo fue construir y entrenar, <em>desde cero</em>, una red neuronal convolucional capaz de
@@ -413,15 +411,13 @@
     </div>
 
     <p>
-      Esto nos alertó de que necesitaríamos estrategias activas para contrarrestar el sesgo: augmentation
-      extendido y monitorear métricas por clase —no solo exactitud global— para detectar si la red estaba
+      Esto nos alertó de que necesitaríamos estrategias activas para contrarrestar el sesgo en especial el monitorear métricas por clase, para detectar si la red estaba
       ignorando las clases minoritarias.
     </p>
 
     <h3>Hallazgo 2 — Resolución muy baja y alta variabilidad visual</h3>
     <p>
-      48 × 48 píxeles implica que muchos detalles discriminativos —la comisura de los labios, la tensión de
-      las cejas— quedan reducidos a pocos píxeles. Adicionalmente, las imágenes fueron recolectadas
+      48 × 48 píxeles implica que muchos detalles discriminativos quedan reducidos a pocos píxeles. Adicionalmente, las imágenes fueron recolectadas
       automáticamente, introduciendo rostros parcialmente ocluidos, iluminación extrema y variaciones de pose
       sin controlar.
     </p>
@@ -466,9 +462,39 @@
       </div>
     </div>
 
+    <h3>Data Augmentation — pipeline de entrenamiento</h3>
+    <p>
+      El pipeline completo aplica transformaciones geométricas y de color solo al split de entrenamiento.
+      <code>RandomErasing</code> simula oclusiones parciales del rostro, forzando al modelo a no depender de
+      regiones específicas.
+    </p>
+
+<pre><code><span class="cm"># Solo se aplica en split == "train"</span>
+transforms = torchvision.transforms.Compose([
+    *common,
+    torchvision.transforms.RandomHorizontalFlip(<span class="cn">p=0.5</span>),
+    torchvision.transforms.RandomRotation(<span class="cn">15</span>),
+    torchvision.transforms.RandomAffine(
+        degrees=<span class="cn">0</span>,
+        translate=(<span class="cn">0.1</span>, <span class="cn">0.1</span>),   <span class="cm"># desplazamiento máx. 10 %</span>
+        scale=(<span class="cn">0.9</span>, <span class="cn">1.1</span>),       <span class="cm"># zoom ±10 %</span>
+    ),
+    torchvision.transforms.ColorJitter(
+        brightness=<span class="cn">0.3</span>,
+        contrast=<span class="cn">0.3</span>,
+        saturation=<span class="cn">0</span>,           <span class="cm"># imagen en grises, sin efecto</span>
+        hue=<span class="cn">0</span>
+    ),
+    torchvision.transforms.RandomErasing(   <span class="cm"># simula oclusiones</span>
+        p=<span class="cn">0.3</span>,
+        scale=(<span class="cn">0.02</span>, <span class="cn">0.1</span>),
+        ratio=(<span class="cn">0.3</span>, <span class="cn">3.0</span>)
+    ),
+    torchvision.transforms.Normalize((<span class="cs">mean</span>,), (<span class="cs">std</span>,)),
+])</code></pre>
+
     <h3>Arquitectura CNN</h3>
     <p>
-      La red fue diseñada sin skip connections ni mecanismos de atención para mantener una línea base clara.
       La progresión 32→64→128 filtros sigue el principio de aumentar la capacidad representacional a medida
       que el mapa espacial se reduce. El Dropout de 0.4 fue el principal mecanismo de regularización,
       complementado por weight decay en el optimizador.
@@ -476,16 +502,18 @@
 
 <pre><code><span class="cm"># Entrada: 48×48×1 (escala de grises)</span>
 Input <span class="cn">48×48×1</span>
-  <span class="ck">└─</span> Conv(<span class="cn">32</span>, 3×3) → BatchNorm → ReLU → MaxPool(2×2)
-  <span class="ck">└─</span> Conv(<span class="cn">64</span>, 3×3) → BatchNorm → ReLU → MaxPool(2×2)
-  <span class="ck">└─</span> Conv(<span class="cn">128</span>, 3×3) → BatchNorm → ReLU → MaxPool(2×2)
-  <span class="ck">└─</span> Flatten
-  <span class="ck">└─</span> Dropout(<span class="cn">0.4</span>)
-  <span class="ck">└─</span> Linear(<span class="cn">128</span>) → ReLU
-  <span class="ck">└─</span> Linear(<span class="cn">7</span>)  <span class="cm"># una salida por emoción</span></code></pre>
+  <span class="ck">└─</span> Conv(<span class="cn">32</span>, 3×3) → BatchNorm → ReLU → MaxPool(2×2)  <span class="cm"># 48→24</span>
+  <span class="ck">└─</span> Conv(<span class="cn">64</span>, 3×3) → BatchNorm → ReLU → MaxPool(2×2)  <span class="cm"># 24→12</span>
+  <span class="ck">└─</span> Conv(<span class="cn">128</span>, 3×3) → BatchNorm → ReLU                <span class="cm"># sin pool</span>
+  <span class="ck">└─</span> Conv(<span class="cn">256</span>, 3×3) → BatchNorm → ReLU → MaxPool(2×2)  <span class="cm"># 12→6</span>
+  <span class="ck">└─</span> Flatten <span class="cm"># 256×6×6 = 9216</span>
+  <span class="ck">└─</span> Linear(<span class="cn">1024</span>) → BatchNorm → ReLU → Dropout(<span class="cn">0.5</span>)
+  <span class="ck">└─</span> Linear(<span class="cn">256</span>) → BatchNorm → ReLU → Dropout(<span class="cn">0.3</span>)
+  <span class="ck">└─</span> Linear(<span class="cn">7</span>)  <span class="cm"># una salida por emoción</span>
+</code></pre>
 
-  <div style="background:#0f0f14; padding:1.75rem; border-radius:12px; margin-top:1rem; display:inline-block; width:100%;">
-    <img src="/arquitectura.svg" alt="Diagrama de la arquitectura CNN" style="width:100%; max-width:600px; display:block; margin:0 auto; border-radius:6px;">
+  <div style="background:#0f0f14; padding:1.75rem; border-radius:12px; margin-top:1rem; display:flex; justify-content:center; align-items:center;">
+    <img src="/arquitectura.svg" alt="Diagrama de la arquitectura CNN" style="max-width:600px; width:100%; border-radius:6px;">
   </div>
 
     <h3>Scheduler de learning rate</h3>
@@ -554,21 +582,21 @@ Input <span class="cn">48×48×1</span>
             <td>CNN + Augmentation básica</td>
             <td>Sí (básica)</td>
             <td>No</td>
-            <td>63.0 %</td>
+            <td>60.0 %</td>
           </tr>
           <tr>
             <td>3</td>
             <td>CNN + Aug. extendida + BN</td>
             <td>Sí (extendida)</td>
             <td>Sí</td>
-            <td>64.4 %</td>
+            <td>62.4 %</td>
           </tr>
           <tr class="hl">
             <td>4</td>
             <td>Mejor configuración CNN <span class="badge badge-best">Mejor CNN</span></td>
             <td>Sí (extendida)</td>
             <td>Sí</td>
-            <td><strong>~65 %</strong></td>
+            <td><strong>~63 % - 64 %</strong></td>
           </tr>
         </tbody>
       </table>
@@ -719,18 +747,12 @@ Input <span class="cn">48×48×1</span>
           </tr>
           <tr class="exp-best">
             <td>E20</td><td>8e-4</td><td>CosineAnnealing</td><td>5e-5</td><td>20</td><td>0.05</td>
-            <td class="acc-cell">~65% <span class="badge badge-best">Mejor</span></td>
+            <td class="acc-cell">~64% <span class="badge badge-best">Mejor</span></td>
             <td class="trend-up">↑↑</td>
             <td class="interp">Mejor configuración. Equilibrio óptimo entre todos los factores.</td>
           </tr>
         </tbody>
       </table>
-    </div>
-
-    <div class="callout warn">
-      <p><strong>Recuerda:</strong> los valores de Val Acc marcados con <code>—</code> son placeholders.
-      Reemplázalos con tus resultados reales de cada corrida. Actualiza también el ~65% de E20 con el
-      valor exacto de tu mejor run.</p>
     </div>
 
     <h3>Patrones clave de la experimentación</h3>
@@ -752,7 +774,7 @@ Input <span class="cn">48×48×1</span>
     <h2>Conclusiones y trabajo futuro</h2>
 
     <p>
-      Construimos una CNN propia para clasificar siete emociones sobre FER2013, llegando a ~65% de exactitud
+      Construimos una CNN propia para clasificar siete emociones sobre FER2013, llegando a ~64% de exactitud
       en validación tras más de 20 experimentos de hiperparámetros. La lección central fue que en datasets
       pequeños y ruidosos, las ganancias provienen del régimen de entrenamiento —augmentation, scheduler,
       regularización— y no de escalar la arquitectura.
