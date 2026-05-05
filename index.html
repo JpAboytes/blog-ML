@@ -97,6 +97,21 @@
       font-size: 1rem; color: rgba(255,255,255,0.6);
       max-width: 560px; line-height: 1.75; margin-bottom: 2.5rem; font-weight: 300;
     }
+    /* MODEL NAME */
+    .model-name-badge {
+      display: inline-flex; align-items: center; gap: 0.6rem;
+      margin: 1rem 0 1.5rem;
+    }
+    .model-name-label {
+      font-family: var(--mono); font-size: 0.65rem; font-weight: 500;
+      color: rgba(255,255,255,0.35); letter-spacing: 0.15em; text-transform: uppercase;
+    }
+    .model-name-value {
+      font-family: var(--serif); font-size: 1.5rem; font-weight: 400;
+      color: var(--gold); letter-spacing: 0.08em;
+      text-shadow: 0 0 30px rgba(200,168,75,0.4);
+    }
+
     .hero-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
     .hero-tag {
       font-family: var(--mono); font-size: 0.7rem; color: rgba(255,255,255,0.45);
@@ -260,7 +275,7 @@
 
 <nav class="top-nav">
   <div class="top-nav-inner">
-    <span class="nav-brand">ICC CETYS · Machine Learning</span>
+    <span class="nav-brand">ICC CETYS</span>
     <ul class="nav-links">
       <li><a href="#problema">Planteamiento</a></li>
       <li><a href="#arte">Estado del Arte</a></li>
@@ -277,14 +292,17 @@
   <div class="hero-inner">
     <div class="hero-eyebrow"><span></span> Proyecto · Machine Learning · Mayo 2026</div>
     <h1>Reconocimiento de <em>Expresiones Faciales</em> con Redes Neuronales</h1>
+    <div class="model-name-badge">
+      <span class="model-name-label">Modelo</span>
+      <span class="model-name-value">TLALÓC</span>
+    </div>
     <p class="hero-sub">
       Construimos y entrenamos una CNN propia sobre FER2013 para clasificar siete emociones humanas,
       iterando sobre más de 20 experimentos de hiperparámetros para entender qué decisiones de diseño realmente importan.
     </p>
     <div class="hero-tags">
-      <span class="hero-tag">Modelo el santo</span>
       <span class="hero-tag">Equipo: JJJ</span>
-      <span class="hero-tag">Maestra: Jessica Borja</span>
+      <span class="hero-tag">Profesora: Jessica Borja</span>
     </div>
   </div>
 </header>
@@ -800,15 +818,7 @@ Input <span class="cn">48×48×1</span>
 <footer>
   <div class="container">
     <strong>Reconocimiento de Expresiones Faciales con Redes Neuronales</strong><br>
-    Proyecto académico · Deep Learning · Mayo 2026
-    <div class="footer-tags">
-      <span class="footer-tag">PyTorch</span>
-      <span class="footer-tag">FER2013</span>
-      <span class="footer-tag">CNN</span>
-      <span class="footer-tag">ResNet18</span>
-      <span class="footer-tag">Transfer Learning</span>
-      <span class="footer-tag">Computer Vision</span>
-    </div>
+    Proyecto académico · Machine Learning · Mayo 2026
   </div>
 </footer>
 
